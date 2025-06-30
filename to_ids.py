@@ -1,6 +1,7 @@
 from tokenizer import BpeTokenizer
 from tqdm import tqdm
 from typing import List
+import json
 import pickle as pkl
 import torch
 import os
@@ -12,7 +13,8 @@ def convert_to_ids(tokenizer: BpeTokenizer, file_path, out_file_path):
     arrows = []
     with open(file_path, "r") as f:
         for line in f:
-            ids = tokenizer.encode(line)
+            line = json.loads(line)
+            ids = tokenizer.encode(line["text"])
             arrows.append(ids)
     
     with open(out_file_path, "w") as f:
