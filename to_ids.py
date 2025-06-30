@@ -20,7 +20,7 @@ def convert_to_ids(tokenizer: BpeTokenizer, file_path, out_file_path):
             arrow = torch.tensor(ids, dtype=torch.int32)
             arrows.append(arrow)
     
-    with open(out_file_path, "w") as f:
+    with open(out_file_path, "wb") as f:
         tensor = torch.cat(arrows)
         pkl.dump(tensor, f)
         
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         os.path.join("dataset", "chinese-c4"),
         os.path.join("dataset", "english-fineweb")
     ]
-    base_out_dir = "cache"
+    base_out_dir = "pkl_output"
     
     files = []
     for dir_path in base_dir:

@@ -3,6 +3,7 @@ __pycache__*
 
 # dataset
 dataset/*
+pkl_output/*
 
 # tokenzier
 tokenizer.json
