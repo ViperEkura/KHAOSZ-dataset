@@ -25,6 +25,10 @@ def process_files(tokenizer: BpeTokenizer, files: List[str], base_out_dir):
     for file_path in tqdm(files, desc="Processing files", total=len(files)):
         out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
         out_file_path = os.path.join(base_out_dir, out_file_name)
+        
+        if not os.path.exists(out_file_path):
+            os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+            
         convert_to_ids(tokenizer, file_path, out_file_path)
 
 
