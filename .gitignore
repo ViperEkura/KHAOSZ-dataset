@@ -7,3 +7,6 @@ pkl_output/*
 
 # tokenzier
 tokenizer.json
+
+# test unit
+test*
