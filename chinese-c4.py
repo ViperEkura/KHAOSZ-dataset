@@ -18,7 +18,7 @@ if __name__ == "__main__":
         end_idx = min((i + 1) * chunk_size, total_samples)
         chunk = train_dataset.select(range(start_idx, end_idx))
 
-        output_path = f"{output_dir}/{output_dir}_text_chunk_{i}.jsonl"
+        output_path = f"{output_dir}/chinese-c4_text_chunk_{i}.jsonl"
         with open(output_path, "w", encoding="utf-8") as f:
             for example in chunk:
                 # 每行写入一个 {"text": "xxx"} 对象
