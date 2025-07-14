@@ -24,7 +24,7 @@ def process_dataset(
     normalization_func=comprehensive_normalization
 ):
 
-    dataset_dict = load_dataset(dataset_name, dataset_config) if dataset_config else load_dataset(dataset_name)
+    dataset_dict = load_dataset(dataset_name, dataset_config)
     train_dataset = dataset_dict[split_name]
 
     total_samples = len(train_dataset)
