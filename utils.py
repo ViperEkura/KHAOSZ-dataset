@@ -65,7 +65,7 @@ def process_dataset(
 
     total_samples = len(train_dataset)
     num_chunks = (total_samples // chunk_size) + 1
-    lim_chunks = max_chunk_size if max_chunk_size else num_chunks
+    lim_chunks = min(max_chunk_size, num_chunks) if max_chunk_size else num_chunks
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir, "dataset", output_subdir)
