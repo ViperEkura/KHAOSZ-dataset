@@ -1,6 +1,19 @@
 from datasets import load_dataset
 import json
 import os
+import re
+
+
+def comprehensive_normalization(text):
+    replacements = {
+        '\u2018': "'", '\u2019': "'", '\u0060': "'",
+        '\u201C': '"', '\u201D': '"', 
+        '\u2013': '-', '\u2014': '--', '\u2212': '-',
+        '\u00A0': ' ',
+        '\u2026': '...'
+    }
+    pattern = re.compile('|'.join(re.escape(k) for k in replacements))
+    return pattern.sub(lambda m: replacements[m.group()], text)      
 
 def process_dataset(
     dataset_name: str,
@@ -8,7 +21,7 @@ def process_dataset(
     dataset_config: str = None,
     split_name: str = "train",
     chunk_size: int = 1000000,
-    normalization_func=None
+    normalization_func=comprehensive_normalization
 ):
 
     dataset_dict = load_dataset(dataset_name, dataset_config) if dataset_config else load_dataset(dataset_name)
@@ -37,3 +50,4 @@ def process_dataset(
 
         print(f"Saved text chunk {i} to {output_path}")
         
+  
