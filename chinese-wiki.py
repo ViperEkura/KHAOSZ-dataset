@@ -4,5 +4,6 @@ if __name__ == "__main__":
     process_dataset(
         dataset_name="wikimedia/wikipedia",
         output_subdir="chinese-wiki",
-        dataset_config="zh"
+        dataset_config="zh",
+        max_chunk_size=5,
     )
