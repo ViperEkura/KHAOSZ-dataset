@@ -11,7 +11,7 @@ if __name__ == "__main__":
         # os.path.join("dataset", "chinese-c4"),
         # os.path.join("dataset", "english-fineweb"),
         # os.path.join("dataset", "english-wiki"),
-        os.path.join("dataset", "chinese-wiki"),
+        # os.path.join("dataset", "chinese-wiki"),
     ]
     base_out_dir = "pkl_output"
     files = []
