@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 from datasets import load_dataset
 from tokenizer import BpeTokenizer
 import pickle as pkl
@@ -10,33 +10,8 @@ import re
 
 
 def fetch_files(directory):
-    return [os.path.join(root, f) for root, _, files in os.walk(directory) for f in files]
-
-def convert_to_ids(tokenizer: BpeTokenizer, file_path, out_file_path):
-    arrows = []
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-        file_name = os.path.basename(file_path)
-        for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
-            line = json.loads(line)
-            ids = tokenizer.encode(line["text"])
-            arrow = torch.tensor(ids, dtype=torch.int32)
-            arrows.append(arrow)
-    
-    with open(out_file_path, "wb") as f:
-        tensor = torch.cat(arrows)
-        pkl.dump(tensor, f)
-        
-def process_files(tokenizer: BpeTokenizer, files: List[str], base_out_dir):
-    for file_path in files:
-        out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
-        out_file_path = os.path.join(base_out_dir, out_file_name)
-        
-        if not os.path.exists(out_file_path):
-            os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
-         
-        convert_to_ids(tokenizer, file_path, out_file_path)  
-
+    return [os.path.join(root, f) 
+            for root, _, files in os.walk(directory) for f in files]
 
 def comprehensive_normalization(text):
     replacements = {
@@ -49,6 +24,35 @@ def comprehensive_normalization(text):
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
     return pattern.sub(lambda m: replacements[m.group()], text)      
 
+   
+def dump_pkl_files(
+    tokenizer: BpeTokenizer, 
+    files: List[str], 
+    base_out_dir: str, 
+    encder: Callable[[str], str]=None
+):
+    for file_path in files:
+        out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
+        out_file_path = os.path.join(base_out_dir, out_file_name)
+        
+        if not os.path.exists(out_file_path):
+            os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+        
+        arrows = []
+        with open(file_path, "r") as f:
+            lines = f.readlines()
+            file_name = os.path.basename(file_path)
+            for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
+                line = json.loads(line)
+                processed_line = encder(line)
+                ids = tokenizer.encode(processed_line)
+                arrow = torch.tensor(ids, dtype=torch.int32)
+                arrows.append(arrow)
+        
+        with open(out_file_path, "wb") as f:
+            tensor = torch.cat(arrows)
+            pkl.dump(tensor, f)
+            
 def process_dataset(
     dataset_name: str,
     output_subdir: str,

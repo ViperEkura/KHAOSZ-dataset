@@ -1,4 +1,4 @@
-from utils import process_files, fetch_files
+from utils import dump_pkl_files, fetch_files
 from tokenizer import BpeTokenizer
 import os
 
@@ -15,4 +15,4 @@ if __name__ == "__main__":
     for dir_path in base_dir:
         files.extend(fetch_files(dir_path))
     
-    process_files(tokenizer, files, base_out_dir)
+    dump_pkl_files(tokenizer, files, base_out_dir)
