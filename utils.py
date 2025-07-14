@@ -1,7 +1,41 @@
+from typing import List
 from datasets import load_dataset
+from tokenizer import BpeTokenizer
+import pickle as pkl
+import torch
+import tqdm
 import json
 import os
 import re
+
+
+def fetch_files(directory):
+    return [os.path.join(root, f) for root, _, files in os.walk(directory) for f in files]
+
+def convert_to_ids(tokenizer: BpeTokenizer, file_path, out_file_path):
+    arrows = []
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+        file_name = os.path.basename(file_path)
+        for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
+            line = json.loads(line)
+            ids = tokenizer.encode(line["text"])
+            arrow = torch.tensor(ids, dtype=torch.int32)
+            arrows.append(arrow)
+    
+    with open(out_file_path, "wb") as f:
+        tensor = torch.cat(arrows)
+        pkl.dump(tensor, f)
+        
+def process_files(tokenizer: BpeTokenizer, files: List[str], base_out_dir):
+    for file_path in files:
+        out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
+        out_file_path = os.path.join(base_out_dir, out_file_name)
+        
+        if not os.path.exists(out_file_path):
+            os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+         
+        convert_to_ids(tokenizer, file_path, out_file_path)  
 
 
 def comprehensive_normalization(text):
@@ -51,6 +85,4 @@ def process_dataset(
                 json_line = {column_name : text}
                 f.write(json.dumps(json_line, ensure_ascii=False) + "\n")
 
-        print(f"Saved text chunk {i} to {output_path}")
-        
-  
+        print(f"Saved text chunk {i} to {output_path}")        
