@@ -6,9 +6,9 @@ if __name__ == "__main__":
     item_size = max_chunk_num * chunk_size
     
     process_dataset(
-        dataset_name="chinese-cosmopedia",
+        dataset_name="opencsg/chinese-cosmopedia",
         output_subdir="chinese-wiki",
-        split=f"train[:{item_size}]",
+        data_files=[f"0000{i}.parquet" for i in range(5)],
         max_chunk_num=max_chunk_num,
         chunk_size=chunk_size,
     )

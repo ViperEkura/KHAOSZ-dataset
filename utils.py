@@ -63,6 +63,7 @@ def process_dataset(
     dataset_config: str = None,
     max_chunk_num: int = None,
     split: str = None,
+    data_files: List[str] = None,
     split_name: str = "train",
     column_name: str = "text",
     chunk_size: int = 1000000,
@@ -70,9 +71,10 @@ def process_dataset(
 ):
 
     dataset_dict = load_dataset(
-        data_dir=dataset_name, 
-        data_files=dataset_config,
-        split=split
+        path=dataset_name, 
+        name=dataset_config,
+        split=split,
+        data_files=data_files
     )
     
     train_dataset = dataset_dict[split_name]
