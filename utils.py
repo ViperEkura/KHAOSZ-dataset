@@ -66,7 +66,6 @@ def process_dataset(
     column_name: str = "text",
     normalization_func=comprehensive_normalization,
 ):
-
     train_dataset = dataset_dict[split_name]
     total_samples = len(train_dataset)
     num_chunks = (total_samples // chunk_size) + 1

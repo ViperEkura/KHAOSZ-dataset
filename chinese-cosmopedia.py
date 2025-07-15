@@ -7,7 +7,7 @@ if __name__ == "__main__":
     
     dataset = load_dataset(
         "opencsg/chinese-cosmopedia", 
-        data_files=[f"0000{i}.parquet" for i in range(5)]
+        data_files={"train": [f"data/0000{i}.parquet" for i in range(5)]}
     )
     
     process_dataset(
