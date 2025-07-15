@@ -93,8 +93,8 @@ class BpeTokenizer:
             else:
                 return [encoding.tokens for encoding in encodings]
 
-    def decode(self, tokens: List[int]) -> str:
-        return self._tokenizer.decode(tokens)
+    def decode(self, tokens: List[int], skip_special_tokens=True) -> str:
+        return self._tokenizer.decode(tokens, skip_special_tokens=skip_special_tokens)
     
     def __len__(self) -> int:
         return self._tokenizer.get_vocab_size()

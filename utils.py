@@ -61,19 +61,24 @@ def process_dataset(
     dataset_name: str,
     output_subdir: str,
     dataset_config: str = None,
-    max_chunk_size: int = None,
+    max_chunk_num: int = None,
+    split: str = None,
     split_name: str = "train",
     column_name: str = "text",
     chunk_size: int = 1000000,
     normalization_func=comprehensive_normalization
 ):
 
-    dataset_dict = load_dataset(dataset_name, dataset_config)
+    dataset_dict = load_dataset(
+        data_dir=dataset_name, 
+        data_files=dataset_config,
+        split=split
+    )
+    
     train_dataset = dataset_dict[split_name]
-
     total_samples = len(train_dataset)
     num_chunks = (total_samples // chunk_size) + 1
-    lim_chunks = min(max_chunk_size, num_chunks) if max_chunk_size else num_chunks
+    lim_chunks = min(max_chunk_num, num_chunks) if max_chunk_num else num_chunks
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(script_dir, "dataset", output_subdir)
