@@ -1,5 +1,5 @@
 from typing import List, Callable
-from datasets import load_dataset
+from datasets import DatasetDict
 from tokenizer import BpeTokenizer
 from tqdm import tqdm
 from torch import Tensor
@@ -58,25 +58,15 @@ def dump_pkl_files(
             pkl.dump(tensor, f)
             
 def process_dataset(
-    dataset_name: str,
+    dataset_dict: DatasetDict,
     output_subdir: str,
-    dataset_config: str = None,
     max_chunk_num: int = None,
-    split: str = None,
-    data_files: List[str] = None,
+    chunk_size: int = 1000000,
     split_name: str = "train",
     column_name: str = "text",
-    chunk_size: int = 1000000,
-    normalization_func=comprehensive_normalization
+    normalization_func=comprehensive_normalization,
 ):
 
-    dataset_dict = load_dataset(
-        path=dataset_name, 
-        name=dataset_config,
-        split=split,
-        data_files=data_files
-    )
-    
     train_dataset = dataset_dict[split_name]
     total_samples = len(train_dataset)
     num_chunks = (total_samples // chunk_size) + 1
