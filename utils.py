@@ -93,7 +93,33 @@ def pre_tarin_process(
 
 
 def sft_process(
-    datset_dict: DatasetDict,
+    dataset_dict: DatasetDict,
     output_subdir: str,
+    max_chunk_num: int = None,
+    chunk_size: int = 1000000,
+    split_name: str = "train",
+    processsor: Callable[[str], str] = None,
 ):
-    pass
+    train_dataset = dataset_dict[split_name]
+    total_samples = len(train_dataset)
+    num_chunks = (total_samples // chunk_size) + 1
+    lim_chunks = min(max_chunk_num, num_chunks) if max_chunk_num else num_chunks
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, "dataset", output_subdir)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    
+    for i in range(lim_chunks):
+        start_idx = i * chunk_size
+        end_idx = min((i + 1) * chunk_size, total_samples)
+        chunk = train_dataset.select(range(start_idx, end_idx))
+        
+        output_path = os.path.join(output_dir, f"{output_subdir}_text_chunk_{i}.jsonl")
+        with open(output_path, "w", encoding="utf-8") as f:
+            for example in chunk:
+                if processsor is not None:
+                    example = processsor(example)
+                f.write(json.dumps(example, ensure_ascii=False) + "\n")
+
+        print(f"Saved text chunk {i} to {output_path}")  
