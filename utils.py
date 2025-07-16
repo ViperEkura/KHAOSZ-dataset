@@ -57,7 +57,7 @@ def dump_pkl_files(
             tensor = torch.cat(arrows)
             pkl.dump(tensor, f)
             
-def process_dataset(
+def pre_tarin_process(
     dataset_dict: DatasetDict,
     output_subdir: str,
     max_chunk_num: int = None,
@@ -90,3 +90,10 @@ def process_dataset(
                 f.write(json.dumps(json_line, ensure_ascii=False) + "\n")
 
         print(f"Saved text chunk {i} to {output_path}")        
+
+
+def sft_process(
+    datset_dict: DatasetDict,
+    output_subdir: str,
+):
+    pass

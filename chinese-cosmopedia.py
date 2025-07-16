@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from utils import process_dataset
+from utils import pre_tarin_process
 
 if __name__ == "__main__":
     max_chunk_num = 10
@@ -10,7 +10,7 @@ if __name__ == "__main__":
         data_files={"train": [f"data/0000{i}.parquet" for i in range(5)]}
     )
     
-    process_dataset(
+    pre_tarin_process(
         dataset_dict=dataset,
         output_subdir="chinese-wiki",
         max_chunk_num=max_chunk_num,
