@@ -25,7 +25,6 @@ def process_func(input_dict: dict):
     content = {
         "text": build_prompt(None, examples)
     }
-    print(content)
     return content
 
 
@@ -34,6 +33,5 @@ if __name__ == "__main__":
     process_dataset(
         dataset_dict=dataset,
         output_subdir="belle_sft",
-        chunk_size=5,
         process_func=process_func,
     )
