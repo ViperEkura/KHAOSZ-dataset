@@ -38,7 +38,7 @@ def dump_pkl_files(
 ):  
     def process_line(line: str) -> Tensor:
             line = json.loads(line)[key]
-            processed_line = encoder(line)
+            processed_line = encoder(line) if encoder else line
             ids = tokenizer.encode(processed_line)
             arrow = torch.tensor(ids, dtype=torch.int32)
             return arrow

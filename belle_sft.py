@@ -32,6 +32,6 @@ if __name__ == "__main__":
     dataset = load_dataset("BelleGroup/train_3.5M_CN")
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="belle_sft",
+        output_subdir="belle-sft",
         process_func=process_func,
     )
