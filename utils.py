@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import List, Callable, Union
 from datasets import DatasetDict
 from tokenizer import BpeTokenizer
 from tqdm import tqdm
@@ -64,7 +64,7 @@ def process_dataset(
     chunk_size: int = 1000000,
     split_name: str = "train",
     column_name: str = "text",
-    process_func: Callable[[dict], dict] = None,
+    process_func: Callable[[Union[dict, List[dict]]], dict] = None,
     normalization_func=comprehensive_normalization,
 ):
     train_dataset = dataset_dict[split_name]
