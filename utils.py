@@ -3,6 +3,8 @@ from datasets import DatasetDict
 from tokenizer import BpeTokenizer
 from tqdm import tqdm
 from torch import Tensor
+
+import torch.nn.functional as F
 import pickle as pkl
 import torch
 import json
@@ -32,6 +34,7 @@ def dump_pkl_files(
     base_out_dir: str, 
     encoder: Callable[[str], str]=None,
     key: str='text',
+    packing_size: int=None
 ):  
     def process_line(line: str) -> Tensor:
             line = json.loads(line)[key]
@@ -44,7 +47,7 @@ def dump_pkl_files(
         out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
         out_file_path = os.path.join(base_out_dir, out_file_name)
         file_name = os.path.basename(file_path)
-        arrows = []
+        arrows: List[Tensor] = []
         
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
         with open(file_path, "r") as f:    
@@ -53,9 +56,39 @@ def dump_pkl_files(
             arrow = process_line(line)
             arrows.append(arrow)
         
-        with open(out_file_path, "wb") as f:
-            tensor = torch.cat(arrows)
-            pkl.dump(tensor, f)
+        if packing_size is None:
+            with open(out_file_path, "wb") as f:
+                package_tensor = torch.cat(arrows)
+                pkl.dump(package_tensor, f)
+        else:
+            arrows.sort(key=lambda x: x.numel(), reverse=True)
+            packages = []
+            cur_size = 0
+            cur_tensor = torch.tensor([])
+            
+            for i in tqdm(range(0, len(arrows)), desc=f"Packing {file_name}", leave=False):
+                cur_ids = arrows[i]
+                if cur_ids.numel() <= packing_size:
+                    if cur_ids.numel() + cur_tensor.numel() <= packing_size:
+                        cur_size += cur_ids.numel()
+                        cur_tensor = torch.cat([cur_tensor, cur_ids])
+                    else:
+                        cur_tensor = F.pad(
+                            cur_tensor, 
+                            (0, packing_size - cur_tensor.numel()),
+                            tokenizer.pad_id
+                        )
+                        packages.append(cur_tensor)
+                        cur_tensor = cur_ids
+                else:
+                    packages.append(cur_ids[:packing_size])
+            
+        
+            with open(out_file_path, "wb") as f:
+                package_tensor = torch.cat(packages)
+                pkl.dump(package_tensor, f)
+            
+                    
             
 def process_dataset(
     dataset_dict: DatasetDict,
