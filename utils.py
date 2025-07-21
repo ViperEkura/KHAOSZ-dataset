@@ -25,12 +25,6 @@ def comprehensive_normalization(text):
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
     return pattern.sub(lambda m: replacements[m.group()], text) 
 
-def pt_processor(text):
-    text = comprehensive_normalization(text)
-    text = text.lower()
-    return text    
-
-
 def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> List[Tensor]:
     packages = []
     sequences.sort(key=lambda x: x.numel(), reverse=True)
