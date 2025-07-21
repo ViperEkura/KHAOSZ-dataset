@@ -76,6 +76,7 @@ def dump_pkl_files(
                         cur_tensor = F.pad(
                             cur_tensor, 
                             (0, packing_size - cur_tensor.numel()),
+                            'constant',
                             tokenizer.pad_id
                         )
                         packages.append(cur_tensor)
