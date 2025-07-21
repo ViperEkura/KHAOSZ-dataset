@@ -1,11 +1,20 @@
-# Mxode/Chinese-Reasoning-Distil-Data
-
 from datasets import DatasetDict
 from datasets import load_dataset, concatenate_datasets
 from utils import process_dataset
 
 
-def build_prompt(query, response) -> str:
+def build_prompt(query:str, response:str) -> str:
+    replacements = {
+        "\\[": "$$",
+        "\\]": "$$",
+        "\\(": "$",
+        "\\)": "$"
+    }
+
+    for old, new in replacements.items():
+        query = query.replace(old, new)
+        response = response.replace(old, new)
+         
     return f"<|user|> {query} <|system|> <bos>{response}<eos>\n"
 
 
