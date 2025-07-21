@@ -12,7 +12,7 @@ def build_prompt(query, response) -> str:
 def process_func(input_dict: dict):
     query = input_dict["prompt"]
     response = input_dict["response"]
-    return build_prompt(query, response)
+    return {"text": build_prompt(query, response)}
 
 
 if __name__ == "__main__":
