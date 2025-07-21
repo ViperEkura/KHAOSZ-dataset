@@ -109,7 +109,7 @@ def process_dataset(
     chunk_size: int = 1000000,
     split_name: str = "train",
     column_name: str = "text",
-    process_func: Callable[[Union[dict, List[dict]]], dict] = None,
+    process_func: Union[Callable[[dict], dict], Callable[[List[dict]], List[dict]]] = None,
     normalization_func=comprehensive_normalization,
 ):
     train_dataset = dataset_dict[split_name]
@@ -129,13 +129,19 @@ def process_dataset(
         output_path = os.path.join(output_dir, f"{output_subdir}_text_chunk_{i}.jsonl")
         with open(output_path, "w", encoding="utf-8") as f:
             for example in chunk:
-                if process_func is not None:
+                if process_func:
                     processed_example = process_func(example)
                 else:
                     text = example[column_name]
                     if normalization_func:
                         text = normalization_func(text)
                     processed_example = {column_name: text}
-                f.write(json.dumps(processed_example, ensure_ascii=False) + "\n")
+                
+                if isinstance(processed_example, dict):
+                    f.write(json.dumps(processed_example, ensure_ascii=False) + "\n")
+                elif isinstance(processed_example, list):
+                    for item in processed_example:
+                        f.write(json.dumps(item, ensure_ascii=False) + "\n")
+                        
 
         print(f"Saved text chunk {i} to {output_path}")
