@@ -27,6 +27,45 @@ def comprehensive_normalization(text):
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
     return pattern.sub(lambda m: replacements[m.group()], text)      
 
+
+def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> List[Tensor]:
+    packages = []
+    sequences.sort(key=lambda x: x.numel(), reverse=True)
+    current_pack = torch.tensor([], dtype=torch.int32)
+    
+    for tensor in sequences:
+        if tensor.numel() > pack_size:
+            packages.append(tensor[:pack_size])
+            continue
+            
+        remaining = pack_size - current_pack.numel()
+        
+        if remaining == 0:
+            packages.append(current_pack)
+            current_pack = tensor
+        elif tensor.numel() <= remaining:
+            current_pack = torch.cat([current_pack, tensor])
+        else:
+            padding = torch.full((remaining,), pad_value, dtype=torch.int32)
+            current_pack = torch.cat([current_pack, padding])
+            packages.append(current_pack)
+            current_pack = tensor
+    
+    if current_pack.numel() > 0:
+        if current_pack.numel() < pack_size:
+            padding = torch.full(
+                (pack_size - current_pack.numel(),), 
+                pad_value, 
+                dtype=torch.int32
+            )
+            current_pack = torch.cat([current_pack, padding])
+        else:
+            current_pack = current_pack[:pack_size]
+            
+        packages.append(current_pack)
+        
+    return packages
+
 def dump_pkl_files(
     files: List[str], 
     base_out_dir: str,
