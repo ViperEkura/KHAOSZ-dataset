@@ -3,25 +3,23 @@ from datasets import load_dataset, concatenate_datasets
 from utils import process_dataset
 
 
-def build_prompt(query:str, response:str) -> str:
+def replace_seg(query:str, response:str) -> str:
     replacements = {
-        "\\[": "$$",
-        "\\]": "$$",
-        "\\(": "$",
-        "\\)": "$"
+        "\\[": "$$", "\\]": "$$",
+        "\\(": "$", "\\)": "$"
     }
-
     for old, new in replacements.items():
         query = query.replace(old, new)
         response = response.replace(old, new)
-         
-    return f"<|user|> {query} <|system|> <bos>{response}<eos>\n"
 
+    return {"query": query, "response": response}
 
 def process_func(input_dict: dict):
     query = input_dict["prompt"] if input_dict["prompt"] else ""
-    response = input_dict["response"] if input_dict["response"] else ""
-    return {"text": build_prompt(query, response)}
+    resp = input_dict["response"] if input_dict["response"] else ""
+    query, resp = replace_seg(query, resp)
+    
+    return {"query": query, "response": resp }
 
 
 if __name__ == "__main__":
