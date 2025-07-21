@@ -1,10 +1,8 @@
 from typing import Dict, List, Callable, Union
 from datasets import DatasetDict
-from tokenizer import BpeTokenizer
 from tqdm import tqdm
 from torch import Tensor
 
-import torch.nn.functional as F
 import pickle as pkl
 import torch
 import json
@@ -25,7 +23,12 @@ def comprehensive_normalization(text):
         '\u2026': '...'
     }
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
-    return pattern.sub(lambda m: replacements[m.group()], text)      
+    return pattern.sub(lambda m: replacements[m.group()], text) 
+
+def pt_processor(text):
+    text = comprehensive_normalization(text)
+    text = text.lower()
+    return text    
 
 
 def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> List[Tensor]:
@@ -71,15 +74,17 @@ def dump_pkl_files(
     base_out_dir: str,
     process_func: Callable[[dict], dict],
     output_keys: List[str],
-    packing_size: int = -1
+    packing_size: int = -1,
+    pad_value: int = 0
 ):
         
     for file_path in files:
         out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
         out_file_path = os.path.join(base_out_dir, out_file_name)
         file_name = os.path.basename(file_path)
-        arrows: Dict[str, List[Tensor]] = {}
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+        
+        arrows: Dict[str, List[Tensor]] = {}
         
         with open(file_path, "r") as f:    
             lines = f.readlines()
@@ -89,10 +94,14 @@ def dump_pkl_files(
             for key in output_keys:
                 arrows[key].extend(arrow[key])
             
-        output_package = {}
+        output_package: Dict[str, Tensor] = {}
+        
         for key in output_keys:
-            tensor = torch.cat(arrows[key])
-            output_package[key] = tensor
+            print(f"Packaging key: '{key}'")
+            if packing_size > 0:
+                arrows[key] = pack_sequences(arrows[key], packing_size, pad_value)
+            sequence = torch.cat(arrows[key])
+            output_package[key] = sequence
          
         with open(out_file_path, "w") as f:
             pkl.dump(output_package, f)
