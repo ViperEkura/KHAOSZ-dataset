@@ -97,8 +97,8 @@ def dump_pkl_files(
         output_package: Dict[str, Tensor] = {}
         
         for key in output_keys:
-            print(f"Packaging key: '{key}'")
             if packing_size > 0:
+                print(f"Packaging key: '{key}'")
                 arrows[key] = pack_sequences(arrows[key], packing_size, pad_value)
             sequence = torch.cat(arrows[key])
             output_package[key] = sequence
