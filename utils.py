@@ -1,4 +1,4 @@
-from typing import List, Callable, Union
+from typing import Dict, List, Callable, Union
 from datasets import DatasetDict
 from tokenizer import BpeTokenizer
 from tqdm import tqdm
@@ -28,62 +28,36 @@ def comprehensive_normalization(text):
     return pattern.sub(lambda m: replacements[m.group()], text)      
 
 def dump_pkl_files(
-    tokenizer: BpeTokenizer,
     files: List[str], 
     base_out_dir: str,
-    process_func: Callable[[dict], str],
+    process_func: Callable[[dict], dict],
+    output_keys: List[str],
     packing_size: int = -1
 ):
-    def process_line(line: str) -> Tensor:
-        dict_line = json.loads(line)
-        tokens = process_func(dict_line)
-        ids = tokenizer.encode(tokens)
-        return torch.tensor(ids, dtype=torch.int32)
         
     for file_path in files:
         out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
         out_file_path = os.path.join(base_out_dir, out_file_name)
         file_name = os.path.basename(file_path)
-        arrows: List[Tensor] = []
-        
+        arrows: Dict[str, List[Tensor]] = {}
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+        
         with open(file_path, "r") as f:    
             lines = f.readlines()
-        for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
-            arrow = process_line(line)
-            arrows.append(arrow)
-            if packing_size > 0:
-                with open(out_file_path, "wb") as f:
-                    package_tensor = torch.cat(arrows)
-                    pkl.dump(package_tensor, f)
-            else:
-                arrows.sort(key=lambda x: x.numel(), reverse=True)
-                packages = []
-                cur_size = 0
-                cur_tensor = torch.tensor([])
-                
-                for i in tqdm(range(0, len(arrows)), desc=f"Packing {file_name}", leave=False):
-                    cur_ids = arrows[i]
-                    if cur_ids.numel() <= packing_size:
-                        if cur_ids.numel() + cur_tensor.numel() <= packing_size:
-                            cur_size += cur_ids.numel()
-                            cur_tensor = torch.cat([cur_tensor, cur_ids])
-                        else:
-                            cur_tensor = F.pad(
-                                cur_tensor, 
-                                (0, packing_size - cur_tensor.numel()),
-                                'constant',
-                                tokenizer.pad_id
-                            )
-                            packages.append(cur_tensor)
-                            cur_tensor = cur_ids
-                    else:
-                        packages.append(cur_ids[:packing_size])
-                
             
-                with open(out_file_path, "wb") as f:
-                    package_tensor = torch.cat(packages)
-                    pkl.dump(package_tensor, f)
+        for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
+            arrow = process_func(line)
+            for key in output_keys:
+                arrows[key].extend(arrow[key])
+            
+        output_package = {}
+        for key in output_keys:
+            tensor = torch.cat(arrows[key])
+            output_package[key] = tensor
+         
+        with open(out_file_path, "w") as f:
+            pkl.dump(output_package, f)
+            
                     
             
 def process_dataset(
