@@ -5,7 +5,8 @@ import os
 if __name__ == "__main__":
     tokenizer = BpeTokenizer("tokenizer.json")
     base_dir = [
-        os.path.join("dataset", "belle-sft"),
+        # os.path.join("dataset", "belle-sft"),
+        os.path.join("dataset", "chinese-instruct")
     ]
     base_out_dir = "pkl_output"
     files = []
