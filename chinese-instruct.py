@@ -19,8 +19,8 @@ def build_prompt(query:str, response:str) -> str:
 
 
 def process_func(input_dict: dict):
-    query = input_dict["prompt"]
-    response = input_dict["response"]
+    query = input_dict["prompt"] if input_dict["prompt"] else ""
+    response = input_dict["response"] if input_dict["response"] else ""
     return {"text": build_prompt(query, response)}
 
 
