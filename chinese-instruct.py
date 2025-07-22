@@ -12,7 +12,7 @@ def replace_seg(query:str, response:str) -> str:
         query = query.replace(old, new)
         response = response.replace(old, new)
 
-    return {"query": query, "response": response}
+    return query, response
 
 def process_func(input_dict: dict):
     query = input_dict["prompt"] if input_dict["prompt"] else ""

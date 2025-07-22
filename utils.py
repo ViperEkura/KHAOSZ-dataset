@@ -79,12 +79,15 @@ def dump_pkl_files(
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
         
         arrows: Dict[str, List[Tensor]] = {}
+        for key in output_keys:
+            arrows[key] = []
         
         with open(file_path, "r") as f:    
             lines = f.readlines()
             
         for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
-            arrow = process_func(line)
+            line_dict = json.loads(line)
+            arrow = process_func(line_dict)
             for key in output_keys:
                 arrows[key].extend(arrow[key])
             

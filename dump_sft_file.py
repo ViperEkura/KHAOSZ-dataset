@@ -16,7 +16,7 @@ def get_processor(tokenizer: BpeTokenizer):
         masks = torch.zeros_like(tokens)
         masks[:len(prefix_ids)] = 1
         
-        return tokens, masks
+        return {"sequence": tokens, "mask": masks}
     
     return processor
 
@@ -34,4 +34,4 @@ if __name__ == "__main__":
         
     processor = get_processor(tokenizer)
     
-    dump_pkl_files(files, base_out_dir,)
+    dump_pkl_files(files, base_out_dir,processor, ["sequence", "mask"])
