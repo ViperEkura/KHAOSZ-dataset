@@ -78,9 +78,7 @@ def dump_pkl_files(
         file_name = os.path.basename(file_path)
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
         
-        arrows: Dict[str, List[Tensor]] = {}
-        for key in output_keys:
-            arrows[key] = []
+        arrows: List[Dict[str, Tensor]] = []
         
         with open(file_path, "r") as f:    
             lines = f.readlines()
@@ -88,16 +86,20 @@ def dump_pkl_files(
         for line in tqdm(lines, desc=f"Processing {file_name}", leave=False):
             line_dict = json.loads(line)
             arrow = process_func(line_dict)
-            for key in output_keys:
-                arrows[key].extend(arrow[key])
+            arrows.append(arrow)
+        
+        package: Dict[str, List[Tensor]] = {}
+        for key in output_keys:
+            list_tensor = [arrow[key] for arrow in arrows]
+            package[key] = list_tensor
             
         output_package: Dict[str, Tensor] = {}
         
         for key in output_keys:
             if packing_size > 0:
                 print(f"Packaging key: '{key}'")
-                arrows[key] = pack_sequences(arrows[key], packing_size, pad_value)
-            sequence = torch.cat(arrows[key])
+                package[key] = pack_sequences(package[key], packing_size, pad_value)
+            sequence = torch.cat(package[key])
             output_package[key] = sequence
          
         with open(out_file_path, "w") as f:

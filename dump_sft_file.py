@@ -13,8 +13,8 @@ def get_processor(tokenizer: BpeTokenizer):
         
         tokens = prefix_ids + suffix_ids
         tokens = torch.tensor(tokens, dtype=torch.int32)
-        masks = torch.zeros_like(tokens)
-        masks[:len(prefix_ids)] = 1
+        masks = torch.zeros_like(tokens, dtype=torch.bool)
+        masks[:len(prefix_ids)] = True
         
         return {"sequence": tokens, "mask": masks}
     
