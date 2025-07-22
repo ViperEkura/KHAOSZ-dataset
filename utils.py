@@ -102,7 +102,7 @@ def dump_pkl_files(
             sequence = torch.cat(package[key])
             output_package[key] = sequence
          
-        with open(out_file_path, "w") as f:
+        with open(out_file_path, "wb") as f:
             pkl.dump(output_package, f)
             
                     
