@@ -116,14 +116,16 @@ def process_dataset(
     column_name: str = "text",
     process_func: Union[Callable[[dict], dict], Callable[[List[dict]], List[dict]]] = None,
     normalization_func=comprehensive_normalization,
+    output_dir: str = None,
 ):
     train_dataset = dataset_dict[split_name]
     total_samples = len(train_dataset)
     num_chunks = (total_samples // chunk_size) + 1
     lim_chunks = min(max_chunk_num, num_chunks) if max_chunk_num else num_chunks
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, "dataset", output_subdir)
+    if output_dir is None:
+        output_dir = os.path.join(os.getcwd(), "dataset", output_subdir)
+        
     os.makedirs(output_dir, exist_ok=True)
 
     for i in range(lim_chunks):
