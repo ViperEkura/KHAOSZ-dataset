@@ -1,16 +1,10 @@
-from modules.utils import dump_pkl_files, fetch_files, get_pt_processor
+from modules.utils import dump_pkl_files, fetch_files, fetch_folders, get_pt_processor
 from modules.tokenizer import BpeTokenizer
-import os
 
 
 if __name__ == "__main__":
     tokenizer = BpeTokenizer("tokenizer.json")
-    base_dir = [
-        os.path.join("dataset", "chinese-c4"),
-        os.path.join("dataset", "english-fineweb"),
-        os.path.join("dataset", "english-wiki"),
-        os.path.join("dataset", "chinese-wiki"),
-    ]
+    base_dir = fetch_folders("dataset")
     
     base_out_dir = "pkl_output"
     files = []

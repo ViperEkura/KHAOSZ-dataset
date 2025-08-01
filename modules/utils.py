@@ -14,6 +14,16 @@ import re
 def fetch_files(directory):
     return [os.path.join(root, f) 
             for root, _, files in os.walk(directory) for f in files]
+    
+
+def fetch_folders(root_dir, filter_func=None):
+    folders = []
+    for root, dirs, _ in os.walk(root_dir):
+        for dir_name in dirs:
+            folder_path = os.path.join(root, dir_name)
+            if filter_func is None or filter_func(folder_path):
+                folders.append(folder_path)
+    return folders
 
 
 def comprehensive_normalization(text):
