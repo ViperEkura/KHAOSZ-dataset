@@ -14,7 +14,7 @@ def get_processor(tokenizer: BpeTokenizer):
         tokens = prefix_ids + suffix_ids
         tokens = torch.tensor(tokens, dtype=torch.int32)
         masks = torch.zeros_like(tokens, dtype=torch.bool)
-        masks[:len(prefix_ids)] = True
+        masks[len(prefix_ids):] = True
         
         return {"sequence": tokens, "mask": masks}
     
@@ -24,7 +24,7 @@ def get_processor(tokenizer: BpeTokenizer):
 if __name__ == "__main__":
     tokenizer = BpeTokenizer("tokenizer.json")
     base_dir = [
-        # os.path.join("dataset", "belle-sft"),
+        os.path.join("dataset", "Ling-Coder-SFT"),
         os.path.join("dataset", "chinese-instruct")
     ]
     base_out_dir = "pkl_output"
