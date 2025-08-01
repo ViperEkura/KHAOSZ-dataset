@@ -1,6 +1,6 @@
 # HuggingFaceTB/Magpie-Pro-300K-Filtered-H4
 from datasets import load_dataset
-from utils import process_dataset
+from modules.utils import process_dataset
 
 
 def process_func(input_dict: dict):

@@ -1,5 +1,5 @@
-from utils import dump_pkl_files, fetch_files
-from tokenizer import BpeTokenizer
+from modules.utils import dump_pkl_files, fetch_files
+from modules.tokenizer import BpeTokenizer
 import torch
 import os
 

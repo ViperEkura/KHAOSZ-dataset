@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from utils import process_dataset
+from modules.utils import process_dataset
 
 if __name__ == "__main__":
     max_chunk_num = 10

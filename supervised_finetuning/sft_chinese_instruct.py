@@ -1,6 +1,6 @@
 from datasets import DatasetDict
 from datasets import load_dataset, concatenate_datasets
-from utils import process_dataset
+from modules.utils import process_dataset
 
 
 def replace_seg(query:str, response:str) -> str:
