@@ -1,17 +1,6 @@
-from modules.utils import dump_pkl_files, fetch_files
+from modules.utils import dump_pkl_files, fetch_files, get_pt_processor
 from modules.tokenizer import BpeTokenizer
-import torch
 import os
-
-def get_processor(tokenizer: BpeTokenizer):
-    def processor(intput_dict: dict) -> dict:
-        segment = intput_dict["text"]
-        ids = tokenizer.encode(f"{segment} <eos>")
-        t_ids = torch.tensor(ids, dtype=torch.int32)
-        
-        return {'sequence': t_ids}
-    
-    return processor
 
 
 if __name__ == "__main__":
@@ -27,5 +16,5 @@ if __name__ == "__main__":
     files = []
     for dir_path in base_dir:
         files.extend(fetch_files(dir_path))
-    processor = get_processor(tokenizer)
+    processor = get_pt_processor(tokenizer)
     dump_pkl_files(files, base_out_dir, processor, ["text"])

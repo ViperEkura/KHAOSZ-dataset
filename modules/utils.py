@@ -1,5 +1,6 @@
 from typing import Dict, List, Callable, Union
 from datasets import DatasetDict
+from .tokenizer import BpeTokenizer
 from tqdm import tqdm
 from torch import Tensor
 
@@ -14,6 +15,7 @@ def fetch_files(directory):
     return [os.path.join(root, f) 
             for root, _, files in os.walk(directory) for f in files]
 
+
 def comprehensive_normalization(text):
     replacements = {
         '\u2018': "'", '\u2019': "'", '\u0060': "'",
@@ -24,6 +26,7 @@ def comprehensive_normalization(text):
     }
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
     return pattern.sub(lambda m: replacements[m.group()], text) 
+
 
 def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> List[Tensor]:
     packages = []
@@ -62,6 +65,7 @@ def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> L
         packages.append(current_pack)
         
     return packages
+
 
 def dump_pkl_files(
     files: List[str], 
@@ -104,8 +108,36 @@ def dump_pkl_files(
          
         with open(out_file_path, "wb") as f:
             pkl.dump(output_package, f)
-            
-                    
+
+
+def get_pt_processor(tokenizer: BpeTokenizer):
+    def processor(intput_dict: dict) -> dict:
+        segment = intput_dict["text"]
+        ids = tokenizer.encode(f"{segment} <eos>")
+        t_ids = torch.tensor(ids, dtype=torch.int32)
+        
+        return {'sequence': t_ids}
+
+    return processor
+
+
+def get_sft_processor(tokenizer: BpeTokenizer):
+    def processor(input_dict: dict):
+        query, response = input_dict["query"], input_dict["response"]
+        prefix_seg = f"<|user|> {query} <|system|> <bos>"
+        suffix_seg = f"{response}<eos>\n"
+        prefix_ids = tokenizer.encode(prefix_seg)
+        suffix_ids = tokenizer.encode(suffix_seg)
+        
+        tokens = prefix_ids + suffix_ids
+        tokens = torch.tensor(tokens, dtype=torch.int32)
+        masks = torch.zeros_like(tokens, dtype=torch.bool)
+        masks[len(prefix_ids):] = True
+        
+        return {"sequence": tokens, "mask": masks}
+    
+    return processor
+                          
             
 def process_dataset(
     dataset_dict: DatasetDict,
