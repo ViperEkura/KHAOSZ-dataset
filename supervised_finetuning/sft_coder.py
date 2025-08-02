@@ -15,7 +15,7 @@ if __name__ == "__main__":
     
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="Ling-Coder-SFT",
+        output_subdir="Ling-Coder-sft",
         process_func=process_func
     )
     

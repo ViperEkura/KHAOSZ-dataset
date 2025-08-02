@@ -12,7 +12,7 @@ if __name__ == "__main__":
     
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="chinese-wiki",
+        output_subdir="chinese-wiki-pretrain",
         max_chunk_num=max_chunk_num,
         chunk_size=chunk_size,
     )

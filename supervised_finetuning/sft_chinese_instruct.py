@@ -36,6 +36,6 @@ if __name__ == "__main__":
     
     process_dataset(
         dataset_dict=DatasetDict({"train": combined_dataset}),
-        output_subdir="chinese-instruct",
+        output_subdir="chinese-instruct-sft",
         process_func=process_func,
     )

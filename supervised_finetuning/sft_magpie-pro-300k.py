@@ -24,7 +24,7 @@ if __name__ == "__main__":
     dataset = load_dataset("HuggingFaceTB/Magpie-Pro-300K-Filtered-H4")
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="belle-sft",
+        output_subdir="Magpie-Pro-300K-sft",
         process_func=process_func,
-        split_name="train-sft"
+        split_name="train_sft",
     )
