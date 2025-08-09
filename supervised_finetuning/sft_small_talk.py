@@ -22,9 +22,9 @@ def process_func(input_dict: dict):
 
 if __name__ == "__main__":
     dataset = load_dataset("opencsg/smoltalk-chinese")
+    
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="Magpie-Pro-300K-sft",
-        process_func=process_func,
-        split_name="train_sft",
+        output_subdir="smoltalk-chinese",
+        process_func=process_func
     )
