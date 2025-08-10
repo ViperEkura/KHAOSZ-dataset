@@ -147,6 +147,22 @@ def get_sft_processor(tokenizer: BpeTokenizer):
         return {"sequence": tokens, "mask": masks}
     
     return processor
+
+def cache_files(tokenizer, files, base_out_dir, cache_type):
+    processor = None
+    keys = []
+    if cache_type == "pt":
+        processor = get_pt_processor(tokenizer)
+        keys = ["text"]
+    elif cache_type == "sft":
+        processor = get_sft_processor(tokenizer)
+        keys = ["query", "response"]
+    elif cache_type == "dpo":
+        keys = ["query", "response"]
+    else:
+        raise ValueError("Invalid cache type")
+    
+    dump_pkl_files(files, base_out_dir, processor, keys)
                           
             
 def process_dataset(
