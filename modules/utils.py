@@ -148,6 +148,29 @@ def get_sft_processor(tokenizer: BpeTokenizer):
     
     return processor
 
+def get_dpo_processor(tokenizer: BpeTokenizer):
+    def processor(input_dict: dict):
+        prompt, chosen, rejected = input_dict["prompt"], input_dict["chosen"], input_dict["rejected"]
+        prefix_seg = f"<|user|> {prompt} <|system|> <bos>"
+        chosen_seg = f"{chosen}<eos>\n"
+        rejected_seg = f"{rejected}<eos>\n"
+        prefix_ids = tokenizer.encode(prefix_seg)
+        chosen_ids = tokenizer.encode(chosen_seg)
+        rejected_ids = tokenizer.encode(rejected_seg)
+        
+        chosen_seq = torch.tensor(prefix_ids + chosen_ids, dtype=torch.int32)
+        chosen_mask = torch.zeros_like(chosen_seq, dtype=torch.bool)
+        chosen_mask[len(prefix_ids):] = True
+        
+        rejected_seq = torch.tensor(prefix_ids + rejected_ids, dtype=torch.int32)
+        resjected_mask = torch.zeros_like(rejected_seq, dtype=torch.bool)
+        resjected_mask[len(prefix_ids):] = True
+
+        return {"chosen": chosen_seq, "chosen_mask": chosen_mask, "rejected": rejected_seq, "rejected_mask": resjected_mask}
+    
+    return processor
+        
+
 def cache_files(tokenizer, files, base_out_dir, cache_type):
     processor = None
     keys = []
@@ -158,7 +181,8 @@ def cache_files(tokenizer, files, base_out_dir, cache_type):
         processor = get_sft_processor(tokenizer)
         keys = ["query", "response"]
     elif cache_type == "dpo":
-        keys = ["query", "response"]
+        processor = get_dpo_processor(tokenizer)
+        keys = ["chosen", "chosen_mask", "rejected", "rejected_mask"]
     else:
         raise ValueError("Invalid cache type")
     
