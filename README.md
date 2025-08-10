@@ -10,7 +10,6 @@
 │   dump_sft_file.py
 │   README.md
 │   run.py
-│   test.py
 │   tokenizer.json
 │
 ├───modules
