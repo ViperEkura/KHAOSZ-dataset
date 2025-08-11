@@ -176,10 +176,10 @@ def cache_files(tokenizer, files, base_out_dir, cache_type):
     keys = []
     if cache_type == "pt":
         processor = get_pt_processor(tokenizer)
-        keys = ["text"]
+        keys = ["sequence"]
     elif cache_type == "sft":
         processor = get_sft_processor(tokenizer)
-        keys = ["query", "response"]
+        keys = ["sequence", "mask"]
     elif cache_type == "dpo":
         processor = get_dpo_processor(tokenizer)
         keys = ["chosen", "chosen_mask", "rejected", "rejected_mask"]
