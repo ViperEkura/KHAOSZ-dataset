@@ -13,6 +13,6 @@ if __name__ == "__main__":
     dataset = load_dataset("wenbopan/Chinese-dpo-pairs")
     process_dataset(
         dataset_dict=dataset,
-        output_subdir="chinese-c4-pretrain",
+        output_subdir="Chinese-dpo-pairs",
         process_func=process_func
     )
