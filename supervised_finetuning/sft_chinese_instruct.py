@@ -1,23 +1,14 @@
 from datasets import DatasetDict
 from datasets import load_dataset, concatenate_datasets
-from modules.utils import process_dataset
+from modules.utils import process_dataset, comprehensive_normalization
 
-
-def replace_seg(query:str, response:str) -> str:
-    replacements = {
-        "\\[": "$$", "\\]": "$$",
-        "\\(": "$", "\\)": "$"
-    }
-    for old, new in replacements.items():
-        query = query.replace(old, new)
-        response = response.replace(old, new)
-
-    return query, response
 
 def process_func(input_dict: dict):
     query = input_dict["prompt"] if input_dict["prompt"] else ""
     resp = input_dict["response"] if input_dict["response"] else ""
-    query, resp = replace_seg(query, resp)
+    
+    query = comprehensive_normalization(query)
+    resp = comprehensive_normalization(resp)
     
     return {"query": query, "response": resp }
 
