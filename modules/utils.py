@@ -132,17 +132,9 @@ def get_pt_processor(tokenizer: BpeTokenizer):
 def get_sft_processor(tokenizer: BpeTokenizer):
     def processor(input_dict: dict):
         query, response = input_dict["query"], input_dict["response"]
-        prefix_seg = f"<|user|> {query} <|system|> <bos>"
-        suffix_seg = f"{response}<eos>\n"
-        prefix_ids = tokenizer.encode(prefix_seg)
-        suffix_ids = tokenizer.encode(suffix_seg)
-        
-        tokens = prefix_ids + suffix_ids
-        tokens = torch.tensor(tokens, dtype=torch.int32)
-        masks = torch.zeros_like(tokens, dtype=torch.bool)
-        masks[len(prefix_ids):] = True
-        
-        return {"sequence": tokens, "mask": masks}
+        tokens = tokenizer.encode(f"<|user|> {query} <|system|> <bos>{response}<eos>\n")
+
+        return {"sequence": tokens}
     
     return processor
 
