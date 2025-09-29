@@ -121,10 +121,10 @@ def dump_pkl_files(
 def get_pt_processor(tokenizer: BpeTokenizer):
     def processor(intput_dict: dict) -> dict:
         segment = intput_dict["text"]
-        ids = tokenizer.encode(f"{segment} <eos>")
-        t_ids = torch.tensor(ids, dtype=torch.int32)
+        tokens = tokenizer.encode(f"{segment}<eos>")
+        tokens = torch.tensor(tokens, dtype=torch.int32)
         
-        return {'sequence': t_ids}
+        return {'sequence': tokens}
 
     return processor
 
@@ -133,6 +133,7 @@ def get_sft_processor(tokenizer: BpeTokenizer):
     def processor(input_dict: dict):
         query, response = input_dict["query"], input_dict["response"]
         tokens = tokenizer.encode(f"<|user|> {query} <|system|> <bos>{response}<eos>\n")
+        tokens = torch.tensor(tokens, dtype=torch.int32)
 
         return {"sequence": tokens}
     
@@ -169,7 +170,7 @@ def cache_files(tokenizer, files, base_out_dir, cache_type):
         keys = ["sequence"]
     elif cache_type == "sft":
         processor = get_sft_processor(tokenizer)
-        keys = ["sequence", "mask"]
+        keys = ["sequence"]
     elif cache_type == "dpo":
         processor = get_dpo_processor(tokenizer)
         keys = ["chosen", "chosen_mask", "rejected", "rejected_mask"]
