@@ -162,7 +162,7 @@ def get_dpo_processor(tokenizer: BpeTokenizer):
     return processor
         
 
-def cache_files(tokenizer, files, base_out_dir, cache_type):
+def cache_files(tokenizer, files, base_out_dir, cache_type, packing_size: int = -1, pad_value: int = 1):
     processor = None
     keys = []
     if cache_type == "pt":
@@ -177,7 +177,7 @@ def cache_files(tokenizer, files, base_out_dir, cache_type):
     else:
         raise ValueError("Invalid cache type")
     
-    dump_pkl_files(files, base_out_dir, processor, keys)
+    dump_pkl_files(files, base_out_dir, processor, keys, packing_size, pad_value)
                           
             
 def process_dataset(
