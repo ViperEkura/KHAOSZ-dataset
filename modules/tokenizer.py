@@ -44,7 +44,7 @@ class BpeTokenizer:
         trainer = BpeTrainer(
             vocab_size=detail_vocab_size,
             min_frequency=min_freq,
-            limit_alphabet=detail_vocab_size // 2,
+            limit_alphabet=detail_vocab_size // 4,
             max_token_length=18,
             special_tokens=self._control_tokens,
             show_progress=True,
@@ -109,3 +109,11 @@ class BpeTokenizer:
     @property
     def pad_id(self) -> int:
         return self._tokenizer.token_to_id("<pad>")
+    
+    @property
+    def user_id(self) -> int:
+        return self._tokenizer.token_to_id("<|user|>")
+    
+    @property
+    def system_id(self) -> int:
+        return self._tokenizer.token_to_id("<|system|>")
