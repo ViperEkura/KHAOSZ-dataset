@@ -39,39 +39,26 @@ def comprehensive_normalization(text):
 def pack_sequences(sequences: List[Tensor], pack_size: int, pad_value: int) -> List[Tensor]:
     packages = []
     sequences.sort(key=lambda x: x.numel(), reverse=True)
-    current_pack = torch.tensor([], dtype=torch.int32)
+    current_pack = torch.full((pack_size,), pad_value, dtype=torch.int32)
+    current_pos = 0
     
     for tensor in sequences:
         if tensor.numel() > pack_size:
-            packages.append(tensor[:pack_size])
-            continue
-            
-        remaining = pack_size - current_pack.numel()
+            tensor = tensor[:pack_size]
         
-        if remaining == 0:
+        tensor_size = tensor.numel()
+        
+        if current_pos + tensor_size > pack_size:
             packages.append(current_pack)
-            current_pack = tensor
-        elif tensor.numel() <= remaining:
-            current_pack = torch.cat([current_pack, tensor])
-        else:
-            padding = torch.full((remaining,), pad_value, dtype=torch.int32)
-            current_pack = torch.cat([current_pack, padding])
-            packages.append(current_pack)
-            current_pack = tensor
-    
-    if current_pack.numel() > 0:
-        if current_pack.numel() < pack_size:
-            padding = torch.full(
-                (pack_size - current_pack.numel(),), 
-                pad_value, 
-                dtype=torch.int32
-            )
-            current_pack = torch.cat([current_pack, padding])
-        else:
-            current_pack = current_pack[:pack_size]
-            
+            current_pack = torch.full((pack_size,), pad_value, dtype=torch.int32)
+            current_pos = 0
+        
+        current_pack[current_pos: current_pos + tensor_size] = tensor
+        current_pos += tensor_size
+        
+    if current_pos > 0:
         packages.append(current_pack)
-        
+    
     return packages
 
 
