@@ -8,7 +8,7 @@ from typing import List, Union
 class BpeTokenizer:
     def __init__(self, path=None):
         self._control_tokens = ["<bos>", "<eos>", "<pad>"]
-        self._special_tokens = ["<|user|>", "<|system|>"]
+        self._special_tokens = ["<|im_start|>", "<|im_end|>"]
         model = BPE()
         tokenizer = Tokenizer(model)
         tokenizer.normalizer = normalizers.Sequence([

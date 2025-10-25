@@ -119,32 +119,19 @@ def get_pt_processor(tokenizer: BpeTokenizer):
 def get_sft_processor(tokenizer: BpeTokenizer):
     def processor(input_dict: dict):
         query, response = input_dict["query"], input_dict["response"]
-        tokens = tokenizer.encode(f"<|user|> {query} <|system|> <bos>{response}<eos>\n")
-        tokens = torch.tensor(tokens, dtype=torch.int32)
+        q = tokenizer.encode(f"<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant")
+        a = tokenizer.encode(f"\n{response}<im_end>\n<eos>")
+        tokens = torch.tensor(q + a, dtype=torch.int32)
+        loss_mask = torch.zeros_like(tokens, dtype=torch.bool)
+        loss_mask[len(q):] = True
 
-        return {"sequence": tokens}
+        return {"sequence": tokens, "loss_mask": loss_mask}
     
     return processor
 
 def get_dpo_processor(tokenizer: BpeTokenizer):
     def processor(input_dict: dict):
-        prompt, chosen, rejected = input_dict["prompt"], input_dict["chosen"], input_dict["rejected"]
-        prefix_seg = f"<|user|> {prompt} <|system|> <bos>"
-        chosen_seg = f"{chosen}<eos>\n"
-        rejected_seg = f"{rejected}<eos>\n"
-        prefix_ids = tokenizer.encode(prefix_seg)
-        chosen_ids = tokenizer.encode(chosen_seg)
-        rejected_ids = tokenizer.encode(rejected_seg)
-        
-        chosen_seq = torch.tensor(prefix_ids + chosen_ids, dtype=torch.int32)
-        chosen_mask = torch.zeros_like(chosen_seq, dtype=torch.bool)
-        chosen_mask[len(prefix_ids):] = True
-        
-        rejected_seq = torch.tensor(prefix_ids + rejected_ids, dtype=torch.int32)
-        resjected_mask = torch.zeros_like(rejected_seq, dtype=torch.bool)
-        resjected_mask[len(prefix_ids):] = True
-
-        return {"chosen": chosen_seq, "chosen_mask": chosen_mask, "rejected": rejected_seq, "rejected_mask": resjected_mask}
+        return None
     
     return processor
         
@@ -157,7 +144,7 @@ def cache_files(tokenizer, files, base_out_dir, cache_type, packing_size: int = 
         keys = ["sequence"]
     elif cache_type == "sft":
         processor = get_sft_processor(tokenizer)
-        keys = ["sequence"]
+        keys = ["sequence", "loss_mask"]
     elif cache_type == "dpo":
         processor = get_dpo_processor(tokenizer)
         keys = ["chosen", "chosen_mask", "rejected", "rejected_mask"]
