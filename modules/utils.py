@@ -119,8 +119,8 @@ def get_pt_processor(tokenizer: BpeTokenizer):
 def get_sft_processor(tokenizer: BpeTokenizer):
     def processor(input_dict: dict):
         query, response = input_dict["query"], input_dict["response"]
-        q = tokenizer.encode(f"<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant")
-        a = tokenizer.encode(f"\n{response}<im_end>\n<eos>")
+        q = tokenizer.encode(f"<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant\n")
+        a = tokenizer.encode(f"{response}<|im_end|>\n<eos>")
         tokens = torch.tensor(q + a, dtype=torch.int32)
         loss_mask = torch.zeros_like(tokens, dtype=torch.bool)
         loss_mask[len(q):] = True
