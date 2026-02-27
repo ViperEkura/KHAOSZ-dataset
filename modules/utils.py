@@ -109,7 +109,7 @@ def dump_files(
 ):
         
     for file_path in files:
-        out_file_name = os.path.basename(file_path).replace(".jsonl", ".pkl")
+        out_file_name = os.path.basename(file_path).replace(".jsonl", ".h5")
         out_file_path = os.path.join(base_out_dir, out_file_name)
         file_name = os.path.basename(file_path)
         os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
