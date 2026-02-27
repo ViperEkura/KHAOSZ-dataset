@@ -129,13 +129,15 @@ def dump_files(
             list_tensor = [arrow[key] for arrow in arrows]
             package[key] = list_tensor
             
-        output_package: Dict[str, Tensor] = {}
+        output_package: Dict[str, List[Tensor]] = {}
         
         for key in output_keys:
             if packing_size > 0:
                 print(f"Packaging key: '{key}'")
-                package[key] = pack_sequences(package[key], packing_size, pad_value)
-            sequence = torch.cat(package[key])
+                sequence = pack_sequences(package[key], packing_size, pad_value)
+            else:
+                sequence = package[key]
+                
             output_package[key] = sequence
          
         save_h5(out_file_path, output_package)
