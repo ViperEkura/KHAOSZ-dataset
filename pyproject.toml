@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "khaosz_dataset"
+version = "0.1.0"
+description = "A dataset processing toolkit for language model training"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "tokenizers>=0.13.0",
+    "datasets>=2.10.0",
+    "numpy>=1.21.0",
+    "tqdm>=4.64.0",
+    "torch>=2.1.0",
+    "h5py>=3.7.0",
+    "regex>=2022.03.15"
+]
+keywords = ["nlp", "datasets", "language-models", "machine-learning"]
+[project.urls]
+Homepage = "https://github.com/khaosz/khaosz_dataset"
+
+[tool.setuptools.packages.find]
+where = ["."] 
