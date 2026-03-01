@@ -37,10 +37,7 @@ def save_h5(file_path: str, tensor_group: Dict[str, List[Tensor]]):
                 arr = tensor.cpu().numpy()
                 dset = grp.create_dataset(
                     f'data_{idx}',
-                    data=arr,
-                    compression='gzip',
-                    compression_opts=4,
-                    shuffle=True
+                    data=arr
                 )
                 dset.attrs['numel'] = tensor.numel()
 
