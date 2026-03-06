@@ -1,6 +1,6 @@
-from typing import Dict, List, Callable, Tuple, Union
+from pathlib import Path
+from typing import Dict, List, Callable, Union
 from datasets import DatasetDict
-import numpy as np
 from modules.tokenizer import BpeTokenizer
 from tqdm import tqdm
 from torch import Tensor
@@ -15,7 +15,6 @@ import re
 def fetch_files(directory):
     return [os.path.join(root, f) 
             for root, _, files in os.walk(directory) for f in files]
-    
 
 def fetch_folders(root_dir, filter_func=None):
     folders = []
@@ -26,39 +25,39 @@ def fetch_folders(root_dir, filter_func=None):
                 folders.append(folder_path)
     return folders
 
-def save_h5(file_path: str, tensor_group: Dict[str, List[Tensor]]):
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with h5py.File(file_path, 'w') as f:
+def save_h5(file_path: str, file_name: str, tensor_group: Dict[str, List[Tensor]]):
+    os.makedirs(file_path, exist_ok=True)
+    full_file_path = os.path.join(file_path, f"{file_name}.h5")
+    with h5py.File(full_file_path, 'w') as f:
         for key, tensors in tensor_group.items():
             grp = f.create_group(key)
-            grp.attrs['num_tensors'] = len(tensors)
-            
             for idx, tensor in enumerate(tensors):
                 arr = tensor.cpu().numpy()
-                dset = grp.create_dataset(
-                    f'data_{idx}',
-                    data=arr
-                )
-                dset.attrs['numel'] = tensor.numel()
+                grp.create_dataset(f'data_{idx}', data=arr)
 
-def load_h5(file_path: str) -> Tuple[Dict[str, List[Tensor]], int]:
+def load_h5(file_path: str, share_memory=True) -> Dict[str, List[Tensor]]:
     tensor_group: Dict[str, List[Tensor]] = {}
-    total_samples = 0
 
-    with h5py.File(file_path, 'r') as f:
-        for key in f.keys():
-            grp = f[key]
-            dsets = []
-            for dset_name in grp.keys():
-                dset = grp[dset_name]
-                dsets.append(torch.from_numpy(dset[:]).share_memory_())
-                total_samples += dset.attrs.get('numel', np.prod(dset.shape))
-            tensor_group[key] = dsets
+    root_path = Path(file_path)
+    h5_files = list(root_path.rglob("*.h5")) + list(root_path.rglob("*.hdf5"))
+    
+    for h5_file in h5_files:
+        with h5py.File(h5_file, 'r') as f:
+            for key in f.keys():
+                grp = f[key]
+                dsets = []
+                for dset_name in grp.keys():
+                    dset = grp[dset_name]
+                    tensor = torch.from_numpy(dset[:])
+                    if share_memory:
+                        tensor = tensor.share_memory_()
+                    dsets.append(tensor)
+            
+                if tensor_group.get(key) is None:
+                    tensor_group[key] = []
+                tensor_group[key].extend(dsets)
 
-    num_keys = max(len(tensor_group), 1)
-    sample_per_key = total_samples // num_keys
-
-    return tensor_group, sample_per_key
+    return tensor_group
 
 def comprehensive_normalization(text):
     replacements = {
@@ -106,10 +105,9 @@ def dump_files(
 ):
         
     for file_path in files:
-        out_file_name = os.path.basename(file_path).replace(".jsonl", ".h5")
-        out_file_path = os.path.join(base_out_dir, out_file_name)
+        os.makedirs(base_out_dir, exist_ok=True)
         file_name = os.path.basename(file_path)
-        os.makedirs(os.path.dirname(out_file_path), exist_ok=True)
+        out_file_name = file_name.split(".")[0]
         
         arrows: List[Dict[str, Tensor]] = []
         
@@ -137,7 +135,7 @@ def dump_files(
                 
             output_package[key] = sequence
          
-        save_h5(out_file_path, output_package)
+        save_h5(base_out_dir, out_file_name, output_package)
 
 
 def get_pt_processor(tokenizer: BpeTokenizer):
