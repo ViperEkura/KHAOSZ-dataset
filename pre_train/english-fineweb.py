@@ -1,9 +1,11 @@
 from datasets import load_dataset
-from modules.utils import process_dataset
+from modules.datapipeline import DataPipeline
 
 if __name__ == "__main__":
     dataset = load_dataset("HuggingFaceFW/fineweb", "sample-10BT")
-    process_dataset(
+    
+    pipeline = DataPipeline()
+    pipeline.process_dataset(
         dataset_dict=dataset,
         output_subdir="english-fineweb-pretrain",
     )

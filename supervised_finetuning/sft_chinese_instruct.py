@@ -1,14 +1,15 @@
 from datasets import DatasetDict
 from datasets import load_dataset, concatenate_datasets
-from modules.utils import process_dataset, comprehensive_normalization
+from modules.datapipeline import DataPipeline, TextNormalizer
 
 
 def process_func(input_dict: dict):
     query = input_dict["prompt"] if input_dict["prompt"] else ""
     resp = input_dict["response"] if input_dict["response"] else ""
     
-    query = comprehensive_normalization(query)
-    resp = comprehensive_normalization(resp)
+    normalizer = TextNormalizer()
+    query = normalizer.normalize(query)
+    resp = normalizer.normalize(resp)
     
     return {"query": query, "response": resp }
 
@@ -25,7 +26,8 @@ if __name__ == "__main__":
     
     combined_dataset = concatenate_datasets(datasets)
     
-    process_dataset(
+    pipeline = DataPipeline()
+    pipeline.process_dataset(
         dataset_dict=DatasetDict({"train": combined_dataset}),
         output_subdir="chinese-instruct-sft",
         process_func=process_func,

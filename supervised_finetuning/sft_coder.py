@@ -1,6 +1,6 @@
 # inclusionAI/Ling-Coder-SFT
 from datasets import load_dataset
-from modules.utils import process_dataset
+from modules.datapipeline import DataPipeline
 
 
 def process_func(input_dict: dict) -> dict:
@@ -13,7 +13,8 @@ def process_func(input_dict: dict) -> dict:
 if __name__ == "__main__":
     dataset = load_dataset("inclusionAI/Ling-Coder-SFT")
     
-    process_dataset(
+    pipeline = DataPipeline()
+    pipeline.process_dataset(
         dataset_dict=dataset,
         output_subdir="Ling-Coder-sft",
         process_func=process_func

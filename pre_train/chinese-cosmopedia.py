@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from modules.utils import process_dataset
+from modules.datapipeline import DataPipeline
 
 if __name__ == "__main__":
     chunk_size = 1000000
@@ -9,7 +9,8 @@ if __name__ == "__main__":
         data_files={"train": [f"data/000{i:02d}.parquet" for i in range(25)]}
     )
     
-    process_dataset(
+    pipeline = DataPipeline()
+    pipeline.process_dataset(
         dataset_dict=dataset,
         output_subdir="chinese-wiki-pretrain",
         chunk_size=chunk_size,

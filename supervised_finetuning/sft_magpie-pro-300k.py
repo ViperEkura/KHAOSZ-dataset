@@ -1,6 +1,6 @@
 # HuggingFaceTB/Magpie-Pro-300K-Filtered-H4
 from datasets import load_dataset
-from modules.utils import process_dataset
+from modules.datapipeline import DataPipeline
 
 
 def process_func(input_dict: dict):
@@ -22,7 +22,9 @@ def process_func(input_dict: dict):
 
 if __name__ == "__main__":
     dataset = load_dataset("HuggingFaceTB/Magpie-Pro-300K-Filtered-H4")
-    process_dataset(
+    
+    pipeline = DataPipeline()
+    pipeline.process_dataset(
         dataset_dict=dataset,
         output_subdir="Magpie-Pro-300K-sft",
         process_func=process_func,
