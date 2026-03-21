@@ -1,13 +1,12 @@
-# cache
-__pycache__*
-*.egg-info
+# Ignore everything
+*
 
-# dataset
-dataset/*
-output/*
+# Allow directories to be traversed
+!*/
 
-# tokenzier
-tokenizer.json
-
-# test unit
-test*
+# Allow specific file types and root files
+!*.py
+!*.md
+!*.png
+!LICENSE
+!pyproject.toml
