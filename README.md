@@ -1,174 +1,238 @@
 # DataPipeline
 
-用于训练KHAOSZ模型的数据集处理工具
+用于训练 KHAOSZ 模型的数据集处理工具。提供文本导出、Tokenize、序列打包、H5 存储等独立工具，支持预训练 / SFT / DPO 三种训练范式。
 
 ## 项目结构
 
 ```
-khaosz_dataset/
-├── modules/                    # 核心模块
-│   ├── tokenizer.py           # BPE Tokenizer
-│   └── datapipeline/          # 数据管道模块
-│       ├── pipeline.py        # 主数据管道
-│       ├── processors.py      # 数据处理器（策略模式）
-│       ├── io.py             # 文件IO操作
-│       ├── packing.py        # 序列打包
-│       └── text.py           # 文本规范化
-├── tokenizer.json             # Tokenizer配置
-└── pyproject.toml            # 项目依赖
+pipeline/
+├── tokenizer.py      # BPE 分词器
+├── text.py           # 文本规范化
+├── packing.py        # 序列打包（bin-packing）
+├── io.py             # 文件/HDF5 读写
+├── processors.py     # PT / SFT / DPO 处理器
+├── export.py         # Dataset → JSONL 导出
+└── cache.py          # JSONL → Tokenize → H5 缓存
+
+pre_train/                          # 预训练数据处理脚本
+supervised_finetuning/              # SFT 数据处理脚本
+reforce_learning/                   # DPO 数据处理脚本
 ```
 
-## 架构设计
+## 设计理念
 
-本项目采用模块化设计，应用了多种设计模式：
+每个模块**独立可用、零互相依赖**，调用者按需组合：
 
-### 设计模式
-1. **策略模式** - 不同类型的数据处理器（PT/SFT/DPO）
-2. **工厂模式** - 处理器工厂统一创建实例
-3. **模板方法模式** - 数据管道流程标准化
-
-### 核心组件
-
-#### DataPipeline（数据管道）
-主数据管道，负责数据集的分块处理、格式转换和存储。
-
-```python
-from modules.datapipeline import DataPipeline
-
-pipeline = DataPipeline(output_dir="./dataset")
-pipeline.process_dataset(
-    dataset_dict=dataset,
-    output_subdir="my-data"
-)
+```
+HuggingFace Hub
+      │
+      ▼  load_dataset()
+  DatasetDict
+      │
+      ▼  export_dataset()          ← pipeline/export.py
+  JSONL 文件
+      │
+      ▼  cache_jsonl()            ← pipeline/cache.py
+      │     ├─ Processor.process()    ← pipeline/processors.py
+      │     ├─ SequencePacker.pack()  ← pipeline/packing.py
+      │     └─ IOHandler.save_h5()    ← pipeline/io.py
+  HDF5 张量文件
 ```
 
-#### ProcessorFactory（处理器工厂）
-创建不同类型的数据处理器。
+> 各阶段之间通过磁盘文件解耦。你可以只执行阶段 1（导出 JSONL），也可以继续执行阶段 2（tokenize 并缓存为 H5），按需选择。
 
-```python
-from modules.datapipeline import ProcessorFactory
-from modules.tokenizer import BpeTokenizer
-
-tokenizer = BpeTokenizer("tokenizer.json")
-
-# 创建预训练处理器
-processor = ProcessorFactory.create("pt", tokenizer)
-
-# 创建SFT处理器
-processor = ProcessorFactory.create("sft", tokenizer)
-```
-
-#### TextNormalizer（文本规范化）
-文本预处理和规范化。
-
-```python
-from modules.datapipeline import TextNormalizer
-
-normalizer = TextNormalizer()
-normalized_text = normalizer.normalize(text)
-```
-
-## 使用说明
+## 快速开始
 
 ### 安装依赖
 
 ```bash
-pip install datasets tokenizers tqdm torch h5py
+pip install -e .
 ```
 
-### 运行数据处理
-
-运行所有数据处理脚本：
-
-```bash
-python run.py
-```
-
-运行特定脚本：
-
-```bash
-# 预训练数据处理
-python pre_train/english-wiki.py
-
-# SFT数据处理
-python supervised_finetuning/sft_belle.py
-
-# DPO数据处理
-python reforce_learning/dpp_chinese_dpo_pairs.py
-```
-
-### 自定义数据处理
-
-#### 1. 基础数据处理
+### 阶段 1：导出数据集为 JSONL
 
 ```python
 from datasets import load_dataset
-from modules.datapipeline import DataPipeline
+from pipeline.export import export_dataset
 
-# 加载数据集
 dataset = load_dataset("your-dataset")
-
-# 创建管道
-pipeline = DataPipeline()
-
-# 处理数据
-pipeline.process_dataset(
-    dataset_dict=dataset,
-    output_subdir="output-dir",
-    process_func=lambda x: {"text": x["content"]}
+export_dataset(
+    dataset=dataset["train"],        # 直接传 Dataset，不传 DatasetDict
+    output_dir="./dataset",
+    output_prefix="my-data",
+    max_chunks=5,                    # 可选，限制 chunk 数量（调试用）
 )
 ```
 
-#### 2. 自定义处理器
+**自定义转换函数：**
 
 ```python
-from modules.datapipeline.processors import BaseProcessor
-from modules.datapipeline import ProcessorFactory
+def process_func(example):
+    # 提取字段、转换格式、展开多轮对话等
+    return {"query": example["instruction"], "response": example["output"]}
+
+export_dataset(
+    dataset=dataset["train"],
+    output_dir="./dataset",
+    output_prefix="my-sft",
+    process_func=process_func,
+)
+```
+
+> `process_func` 返回单个 `dict` 或 `list[dict]`（一条样本可展开为多条）。
+
+**使用文本规范化：**
+
+```python
+from pipeline.text import TextNormalizer
+
+normalizer = TextNormalizer()
+
+def process_func(example):
+    return {"text": normalizer.normalize(example["content"])}
+
+export_dataset(
+    dataset=dataset["train"],
+    output_dir="./dataset",
+    output_prefix="my-pretrain",
+    process_func=process_func,
+)
+```
+
+### 阶段 2：Tokenize 并缓存为 HDF5
+
+```python
+from pipeline.tokenizer import BpeTokenizer
+from pipeline.processors import ProcessorFactory
+from pipeline.cache import cache_jsonl
+
+tokenizer = BpeTokenizer("tokenizer.json")
+processor = ProcessorFactory.create("pt", tokenizer)
+
+cache_jsonl(
+    files=["./dataset/my-pretrain_chunk_0.jsonl"],
+    output_dir="./cached",
+    processor=processor,
+    pack_size=4096,       # 可选，打包长度；<=0 不打包
+    pad_value=1,
+)
+```
+
+**处理器类型：**
+
+| 类型 | 工厂 key | 输入格式 | 输出 keys |
+|------|----------|---------|-----------|
+| 预训练 | `"pt"` | `{"text": "..."}` | `["sequence"]` |
+| SFT | `"sft"` | `{"query": "...", "response": "..."}` | `["sequence", "loss_mask"]` |
+| DPO | `"dpo"` | 待定 | `["chosen", "chosen_mask", "rejected", "rejected_mask"]` |
+
+## 独立工具参考
+
+### BpeTokenizer
+
+```python
+from pipeline.tokenizer import BpeTokenizer
+
+tokenizer = BpeTokenizer("tokenizer.json")
+ids = tokenizer.encode("hello world")           # → [1234, 5678, 1]
+text = tokenizer.decode(ids)                     # → "hello world"
+len(tokenizer)                                   # → 词表大小
+```
+
+### TextNormalizer
+
+```python
+from pipeline.text import TextNormalizer
+
+normalizer = TextNormalizer()
+text = normalizer.normalize(raw_text)
+```
+
+替换规则包括：全角引号 → 半角、各种短横线统一、不间断空格 → 普通空格等。支持自定义规则：
+
+```python
+normalizer = TextNormalizer(custom_rules={"旧词": "新词"})
+```
+
+### SequencePacker
+
+```python
+from pipeline.packing import SequencePacker
+
+packer = SequencePacker(pack_size=4096, pad_value=0)
+packed = packer.pack(list_of_tensors)    # → List[Tensor]，每个长度为 pack_size
+```
+
+### IOHandler
+
+```python
+from pipeline.io import IOHandler
+
+# 保存
+IOHandler.save_h5("./output", "my_data", {"sequence": [tensor1, tensor2]})
+
+# 加载
+data = IOHandler.load_h5("./output")     # → {"sequence": [tensor1, tensor2, ...]}
+
+# 遍历文件
+files = IOHandler.fetch_files("./dataset")
+folders = IOHandler.fetch_folders("./dataset")
+```
+
+### 自定义 Processor
+
+```python
+from pipeline.processors import BaseProcessor, ProcessorFactory
+import torch
 
 class MyProcessor(BaseProcessor):
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
-    
-    def process(self, input_dict: dict) -> dict:
-        # 自定义处理逻辑
-        return {"processed": data}
-    
-    @property
-    def output_keys(self) -> list:
-        return ["processed"]
 
-# 注册处理器
+    def process(self, input_dict):
+        tokens = self.tokenizer.encode(input_dict["text"])
+        return {"sequence": torch.tensor(tokens, dtype=torch.int32)}
+
+    @property
+    def output_keys(self):
+        return ["sequence"]
+
 ProcessorFactory.register("my_type", MyProcessor)
 ```
 
-#### 3. 文本规范化
+## 运行脚本
 
-```python
-from modules.datapipeline import TextNormalizer
+```bash
+# 预训练
+python pre_train/chinese-c4.py
+python pre_train/english-wiki.py
 
-# 使用默认规则
-normalizer = TextNormalizer()
-text = normalizer.normalize(text)
+# SFT
+python supervised_finetuning/sft_belle.py
+python supervised_finetuning/sft_coder.py
 
-# 自定义规则
-custom_rules = {"旧词": "新词"}
-normalizer = TextNormalizer(custom_rules)
+# DPO
+python reforce_learning/dpp_chinese_dpo_pairs.py
 ```
 
-## 数据输出格式
+## 输出格式
 
-### JSONL格式
-每个数据块保存为JSONL文件：
-```
+**JSONL**（阶段 1 输出）：
+
+```jsonl
 {"text": "训练文本内容..."}
 {"query": "问题", "response": "答案"}
 ```
 
-### H5格式
-打包后的张量数据保存为HDF5格式，支持高效加载：
-```python
-from modules.datapipeline import IOHandler
+**HDF5**（阶段 2 输出）：
 
-# 加载H5数据
-data = IOHandler.load_h5("./cached_data")
+```
+my_data.h5
+├── sequence/
+│   ├── data_0    # Tensor (4096,) int32
+│   ├── data_1    # Tensor (4096,) int32
+│   └── ...
+└── loss_mask/     # 仅 SFT
+    ├── data_0    # Tensor (4096,) bool
+    └── ...
 ```

@@ -7,6 +7,4 @@
 # Allow specific file types and root files
 !*.py
 !*.md
-!*.png
-!LICENSE
 !pyproject.toml
